@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wati FY27 OKRs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#1A237E;--navy-light:#283593;
+  --orange:#E65100;--orange-bg:#FFF3E0;--orange-border:#FFB74D;
+  --blue:#1565C0;--blue-bg:#E3F2FD;--blue-border:#64B5F6;
+  --green:#2E7D32;--green-bg:#E8F5E9;--green-border:#81C784;
+  --kr-bg:#F1F8E9;--kr-border:#AED581;
+  --product-bg:#E8EAF6;--leadership-bg:#F3E5F5;
+  --shadow:0 2px 12px rgba(0,0,0,0.08);--shadow-lg:0 8px 32px rgba(0,0,0,0.12);
+  --radius:12px;--radius-sm:8px
+}
+body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:#F5F5F7;color:#1a1a2e;line-height:1.5;min-height:100vh}
+
+/* ── Password ── */
+#password-overlay{position:fixed;inset:0;background:linear-gradient(135deg,#1A237E,#283593,#3949AB);z-index:9999;display:flex;align-items:center;justify-content:center;transition:opacity .5s}
+#password-overlay.fade-out{opacity:0;pointer-events:none}
+.pw-card{background:#fff;border-radius:16px;padding:48px 40px;width:90%;max-width:400px;text-align:center;box-shadow:var(--shadow-lg)}
+.pw-logo{width:80px;height:80px;margin:0 auto 24px;background:linear-gradient(135deg,#25D366,#128C7E);border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:36px;color:#fff;font-weight:800}
+.pw-title{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:8px}
+.pw-sub{font-size:14px;color:#666;margin-bottom:28px}
+.pw-input{width:100%;padding:14px 16px;border:2px solid #e0e0e0;border-radius:var(--radius-sm);font-size:16px;font-family:'Inter',sans-serif;outline:none;transition:border-color .2s}
+.pw-input:focus{border-color:var(--navy)}
+.pw-btn{width:100%;padding:14px;background:var(--navy);color:#fff;border:none;border-radius:var(--radius-sm);font-size:16px;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;margin-top:16px;transition:background .2s}
+.pw-btn:hover{background:var(--navy-light)}
+.pw-error{color:#D32F2F;font-size:13px;margin-top:12px;display:none}
+
+/* ── Upload ── */
+#upload-screen{display:none;min-height:100vh;background:linear-gradient(135deg,#F5F5F7,#E8EAF6);padding:60px 20px;text-align:center}
+.upload-zone{max-width:560px;margin:0 auto;background:#fff;border:3px dashed #C5CAE9;border-radius:20px;padding:60px 40px;cursor:pointer;transition:all .3s}
+.upload-zone:hover,.upload-zone.dragover{border-color:var(--navy);background:#F8F9FF;transform:translateY(-2px)}
+.upload-icon{font-size:64px;margin-bottom:20px}
+.upload-title{font-size:22px;font-weight:700;color:var(--navy);margin-bottom:8px}
+.upload-sub{font-size:14px;color:#888;margin-bottom:24px}
+.upload-btn{display:inline-block;padding:12px 32px;background:var(--navy);color:#fff;border-radius:var(--radius-sm);font-weight:600;font-size:14px;cursor:pointer}
+#file-input{display:none}
+
+/* ── Dashboard ── */
+#dashboard{display:none;max-width:1200px;margin:0 auto;padding:24px 20px 60px}
+
+/* Hero */
+.hero{background:linear-gradient(135deg,var(--navy),#303F9F,#3949AB);border-radius:20px;padding:48px 40px 36px;margin-bottom:32px;color:#fff;position:relative;overflow:hidden}
+.hero::after{content:'';position:absolute;top:-50%;right:-20%;width:60%;height:200%;background:radial-gradient(ellipse,rgba(255,255,255,.06),transparent 70%);pointer-events:none}
+.hero-title{font-size:32px;font-weight:800;margin-bottom:4px;letter-spacing:-.5px}
+.hero-subtitle{font-size:14px;opacity:.75;margin-bottom:32px}
+.stat-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.stat-card{background:rgba(255,255,255,.12);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.18);border-radius:var(--radius);padding:20px;text-align:center;transition:transform .2s}
+.stat-card:hover{transform:translateY(-2px);background:rgba(255,255,255,.18)}
+.stat-label{font-size:11px;text-transform:uppercase;letter-spacing:1.5px;opacity:.7;margin-bottom:8px;font-weight:500}
+.stat-value{font-size:22px;font-weight:800;letter-spacing:-.5px}
+
+/* Filter bar */
+.filter-bar{display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap;align-items:center}
+.filter-label{font-size:13px;font-weight:600;color:#666;margin-right:4px}
+.filter-btn{padding:8px 20px;border:2px solid #E0E0E0;background:#fff;border-radius:24px;font-size:13px;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;transition:all .2s;color:#555}
+.filter-btn:hover{border-color:var(--navy);color:var(--navy)}
+.filter-btn.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+.upload-new-btn{margin-left:auto;padding:8px 16px;border:2px solid #E0E0E0;background:#fff;border-radius:24px;font-size:12px;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;color:#888;transition:all .2s}
+.upload-new-btn:hover{border-color:var(--navy);color:var(--navy)}
+
+/* Objective cards */
+.obj-card{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:20px;overflow:hidden;border:1px solid #E8E8EE}
+.obj-header{padding:20px 24px;display:flex;align-items:center;cursor:pointer;user-select:none;transition:background .15s}
+.obj-header:hover{background:#FAFAFE}
+.obj-chevron{width:24px;height:24px;margin-right:16px;flex-shrink:0;color:var(--navy);font-size:16px;display:flex;align-items:center;justify-content:center;transition:transform .3s}
+.obj-card.expanded .obj-chevron{transform:rotate(90deg)}
+.obj-title{font-size:16px;font-weight:700;color:var(--navy);flex:1}
+.obj-kr-count{font-size:12px;color:#888;background:#F0F0F5;padding:4px 12px;border-radius:12px;font-weight:600;white-space:nowrap;margin-left:12px}
+.obj-body{display:none;padding:0 0 20px}
+.obj-card.expanded .obj-body{display:block}
+
+/* Table */
+.kr-table{width:100%;border-collapse:separate;border-spacing:0;font-size:13px}
+.kr-table th{background:#F8F9FC;padding:10px 12px;text-align:left;font-weight:600;color:#555;font-size:11px;text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid #E8E8EE}
+.kr-table td{padding:10px 12px;border-bottom:1px solid #F0F0F5;vertical-align:top}
+
+/* KR header rows — always visible when objective is open */
+.kr-header-group tr{background:var(--kr-bg)}
+.kr-header-group tr td{font-weight:600;border-bottom:2px solid var(--kr-border)}
+.kr-row-header{cursor:pointer;user-select:none}
+.kr-row-header:hover{filter:brightness(.97)}
+.kr-chevron{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;margin-right:6px;font-size:10px;color:var(--navy);transition:transform .25s;vertical-align:middle;flex-shrink:0}
+.kr-row-header.kr-expanded .kr-chevron{transform:rotate(90deg)}
+
+/* Sub-KR rows — hidden by default, shown when KR is expanded */
+.kr-sub-group{display:none}
+.kr-sub-group.visible{display:table-row-group}
+.kr-sub-group tr.source-product td{background:var(--product-bg)}
+.kr-sub-group tr.source-leadership td{background:var(--leadership-bg)}
+.kr-sub-group tr td{border-bottom:1px solid #F0F0F5}
+.kr-sub-group tr:last-child td{border-bottom:2px solid #E0E0E8}
+
+/* Obj-level rows (callouts, dividers) */
+.kr-obj-level td{padding:0;border-bottom:none}
+
+/* Sub-KR indentation */
+.sub-kr-indent{padding-left:28px !important}
+.deep-sub-indent{padding-left:44px !important}
+
+/* Badges */
+.badge{display:inline-block;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;white-space:nowrap}
+.badge-must-win{background:var(--orange-bg);color:var(--orange);border:1px solid var(--orange-border)}
+.badge-bau{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-border)}
+.badge-experiment{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)}
+.badge-high-impact{background:#FFF8E1;color:#F57F17;border:1px solid #FFD54F}
+.badge-strategic{background:#FCE4EC;color:#C62828;border:1px solid #EF9A9A}
+
+/* YoY delta badges */
+.yoy{display:inline-block;padding:3px 8px;border-radius:8px;font-size:11px;font-weight:700;white-space:nowrap;letter-spacing:-.2px}
+.yoy-up{background:#E8F5E9;color:#2E7D32}
+.yoy-down{background:#FFEBEE;color:#C62828}
+.yoy-note{font-size:10px;color:#aaa;display:block;margin-top:2px}
+
+/* Callouts & dividers */
+.callout{border-radius:var(--radius-sm);padding:12px 16px;margin:8px 24px;font-size:13px;line-height:1.6}
+.callout-pin{background:#E3F2FD;border-left:4px solid #1565C0;color:#0D47A1}
+.callout-warn{background:#FFF3E0;border-left:4px solid #E65100;color:#BF360C}
+.section-divider{padding:8px 24px;font-size:12px;font-weight:700;color:var(--navy);background:linear-gradient(90deg,#E8EAF6,#F5F5F7);letter-spacing:.3px}
+
+/* Appendix */
+.appendix-section{margin-top:40px;border-top:2px solid #E0E0E0;padding-top:24px}
+.appendix-toggle{display:flex;align-items:center;cursor:pointer;user-select:none;padding:12px 0;gap:12px}
+.appendix-toggle h2{font-size:18px;font-weight:700;color:#666}
+.appendix-chevron{font-size:16px;color:#888;transition:transform .3s}
+.appendix-section.expanded .appendix-chevron{transform:rotate(90deg)}
+.appendix-body{display:none;margin-top:16px}
+.appendix-section.expanded .appendix-body{display:block}
+.appendix-group{background:#fff;border-radius:var(--radius-sm);padding:16px 20px;margin-bottom:16px;border:1px solid #E8E8EE}
+.appendix-group-title{font-size:14px;font-weight:700;color:var(--navy);margin-bottom:12px}
+
+.footer{text-align:center;padding:32px 20px;font-size:12px;color:#aaa;font-weight:500}
+
+/* Responsive */
+@media(max-width:768px){
+  .hero{padding:32px 24px 28px}
+  .hero-title{font-size:24px}
+  .stat-cards{grid-template-columns:1fr}
+  .kr-table th,.kr-table td{padding:8px 6px}
+  .kr-table{font-size:12px}
+  .filter-bar{gap:6px}
+  .filter-btn{padding:6px 14px;font-size:12px}
+  .kr-table .hide-mobile{display:none}
+}
+@media(max-width:480px){
+  .stat-cards{gap:10px}
+  .hero-title{font-size:20px}
+}
+</style>
+</head>
+<body>
+
+<!-- Password Overlay -->
+<div id="password-overlay">
+  <div class="pw-card">
+    <div class="pw-logo">W</div>
+    <div class="pw-title">Wati FY27 OKRs</div>
+    <div class="pw-sub">Enter password to access the dashboard</div>
+    <input type="password" class="pw-input" id="pw-input" placeholder="Password" autocomplete="off">
+    <button class="pw-btn" id="pw-btn">Submit</button>
+    <div class="pw-error" id="pw-error">Incorrect password. Please try again.</div>
+  </div>
+</div>
+
+<!-- Upload Screen -->
+<div id="upload-screen">
+  <div style="margin-bottom:40px">
+    <div style="font-size:32px;font-weight:800;color:var(--navy);letter-spacing:-.5px">Wati FY27 OKRs</div>
+    <div style="font-size:14px;color:#888;margin-top:4px">Upload the OKR spreadsheet to render the dashboard</div>
+  </div>
+  <div class="upload-zone" id="upload-zone">
+    <div class="upload-icon">📊</div>
+    <div class="upload-title">Drop your .xlsx file here</div>
+    <div class="upload-sub">or click to browse</div>
+    <div class="upload-btn">Choose File</div>
+  </div>
+  <input type="file" id="file-input" accept=".xlsx,.xls">
+</div>
+
+<!-- Dashboard -->
+<div id="dashboard">
+  <div class="hero">
+    <div class="hero-title">Wati FY27 OKRs</div>
+    <div class="hero-subtitle">3 Company Objectives — Aligned with founders 17 Mar 2026</div>
+    <div class="stat-cards">
+      <div class="stat-card"><div class="stat-label">Objective 1</div><div class="stat-value">$40M Ending ARR</div></div>
+      <div class="stat-card"><div class="stat-label">Objective 2</div><div class="stat-value">Go AI Native</div></div>
+      <div class="stat-card"><div class="stat-label">Objective 3</div><div class="stat-value">Extra $10M</div></div>
+    </div>
+  </div>
+
+  <div class="filter-bar" id="filter-bar">
+    <span class="filter-label">Filter:</span>
+    <button class="filter-btn active" data-filter="all">All</button>
+    <button class="filter-btn" data-filter="Must Win">Must Win</button>
+    <button class="filter-btn" data-filter="BAU">BAU</button>
+    <button class="filter-btn" data-filter="Experiment">Experiment</button>
+    <button class="upload-new-btn" id="upload-new-btn">↑ Upload New File</button>
+  </div>
+
+  <div id="objectives-container"></div>
+
+  <div class="appendix-section" id="appendix-section" style="display:none">
+    <div class="appendix-toggle" id="appendix-toggle">
+      <span class="appendix-chevron">▶</span>
+      <h2>Appendix — Foundation & Supporting Detail</h2>
+    </div>
+    <div class="appendix-body" id="appendix-body"></div>
+  </div>
+
+  <div class="footer">Provisional · April 2026 · For internal use only · * For churn KRs, a negative YoY Δ = improvement</div>
+</div>
+
+<script>
+(function(){
+
+// ──────────────────────────────────────────────
+// Password Gate
+// ──────────────────────────────────────────────
+const overlay    = document.getElementById('password-overlay');
+const uploadScr  = document.getElementById('upload-screen');
+const dashboard  = document.getElementById('dashboard');
+const pwInput    = document.getElementById('pw-input');
+const pwBtn      = document.getElementById('pw-btn');
+const pwError    = document.getElementById('pw-error');
+const CORRECT_PW = 'Wati2027';
+
+function checkUnlocked(){
+  if(sessionStorage.getItem('wati_okr_unlocked')==='true'){
+    overlay.style.display='none'; uploadScr.style.display='block'; return true;
+  }
+  return false;
+}
+function unlock(){
+  if(pwInput.value===CORRECT_PW){
+    sessionStorage.setItem('wati_okr_unlocked','true');
+    overlay.classList.add('fade-out');
+    setTimeout(()=>{overlay.style.display='none'; uploadScr.style.display='block';}, 500);
+  } else {
+    pwError.style.display='block'; pwInput.style.borderColor='#D32F2F';
+    pwInput.value=''; pwInput.focus();
+  }
+}
+pwBtn.addEventListener('click', unlock);
+pwInput.addEventListener('keydown', e=>{ if(e.key==='Enter') unlock(); });
+pwInput.addEventListener('input', ()=>{ pwError.style.display='none'; pwInput.style.borderColor='#e0e0e0'; });
+checkUnlocked();
+
+// ──────────────────────────────────────────────
+// File Upload
+// ──────────────────────────────────────────────
+const uploadZone = document.getElementById('upload-zone');
+const fileInput  = document.getElementById('file-input');
+
+uploadZone.addEventListener('click', ()=>fileInput.click());
+uploadZone.addEventListener('dragover', e=>{ e.preventDefault(); uploadZone.classList.add('dragover'); });
+uploadZone.addEventListener('dragleave', ()=>uploadZone.classList.remove('dragover'));
+uploadZone.addEventListener('drop', e=>{
+  e.preventDefault(); uploadZone.classList.remove('dragover');
+  if(e.dataTransfer.files.length) processFile(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener('change', e=>{ if(e.target.files.length) processFile(e.target.files[0]); });
+document.getElementById('upload-new-btn').addEventListener('click', ()=>{
+  dashboard.style.display='none'; uploadScr.style.display='block'; fileInput.value='';
+});
+
+function processFile(file){
+  const reader = new FileReader();
+  reader.onload = e=>{
+    const wb = XLSX.read(new Uint8Array(e.target.result), {type:'array'});
+    const sheetName = wb.SheetNames.find(n=>n.toLowerCase().includes('merged')) || wb.SheetNames[0];
+    parseAndRender(wb.Sheets[sheetName]);
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// ──────────────────────────────────────────────
+// Parse Excel → structured data
+// ──────────────────────────────────────────────
+function parseAndRender(ws){
+  const range = XLSX.utils.decode_range(ws['!ref']);
+  const hiddenRows = new Set();
+  if(ws['!rows']) ws['!rows'].forEach((r,i)=>{ if(r&&r.hidden) hiddenRows.add(i); });
+
+  const allRows = [];
+  for(let R=range.s.r; R<=range.e.r; R++){
+    const row = [];
+    for(let C=0; C<11; C++){
+      const cell = ws[XLSX.utils.encode_cell({r:R,c:C})];
+      row.push(cell ? (cell.w||String(cell.v||'')) : '');
+    }
+    allRows.push({cells:row, rowIdx:R, hidden:hiddenRows.has(R)});
+  }
+
+  const objectives = [];
+  const appendixRows = [];
+  let currentObj = null;
+  let inFoundation = false;
+
+  for(const r of allRows){
+    const c0 = (r.cells[0]||'').trim();
+    if(r.cells.every(c=>!c.trim())) continue;
+
+    if(c0.startsWith('OBJECTIVE 1')){ currentObj={title:c0,rows:[],krCount:0}; objectives.push(currentObj); inFoundation=false; continue; }
+    if(c0.startsWith('OBJECTIVE 2')){ currentObj={title:c0,rows:[],krCount:0}; objectives.push(currentObj); inFoundation=false; continue; }
+    if(c0.startsWith('OBJECTIVE 3')){ currentObj={title:c0,rows:[],krCount:0}; objectives.push(currentObj); inFoundation=false; continue; }
+    if(c0.startsWith('FOUNDATION')){ inFoundation=true; currentObj=null; appendixRows.push({type:'header',text:c0}); continue; }
+
+    if(inFoundation || (r.hidden && c0!=='Sr No')){
+      if(!c0||c0==='Sr No'||c0.startsWith('Wati FY27')||c0.startsWith('3 Company')||c0.startsWith('Legend:')) continue;
+      appendixRows.push({type:'data', cells:r.cells, isFoundation:inFoundation});
+      continue;
+    }
+
+    if(!c0||c0==='Sr No'||c0.startsWith('Wati FY27')||c0.startsWith('3 Company')||c0.startsWith('Legend:')) continue;
+    if(!currentObj) continue;
+
+    if(c0.startsWith('📌')||c0.startsWith('⚠')){
+      currentObj.rows.push({type:'callout', text:c0, icon:c0.startsWith('📌')?'pin':'warn'}); continue;
+    }
+    if(c0.startsWith('──')){
+      currentObj.rows.push({type:'divider', text:c0.replace(/^──\s*/,'').replace(/\s*──$/,'')}); continue;
+    }
+
+    const isKR    = /^KR\s/i.test(c0);
+    const dotParts = c0.split('.');
+    const isDeepSub = !isKR && dotParts.length > 2;
+    const isSubKR   = !isKR && (/^\d/.test(c0)||/^[A-Z]\.\d/.test(c0));
+
+    if(isKR) currentObj.krCount++;
+    currentObj.rows.push({
+      type:'data', isKR, isSubKR: isSubKR&&!isKR, isDeepSub,
+      cells: r.cells,
+      portfolioTag: (r.cells[7]||'').trim(),
+      source: (r.cells[9]||'').trim()
+    });
+  }
+
+  renderDashboard(objectives, appendixRows);
+}
+
+// ──────────────────────────────────────────────
+// Helpers
+// ──────────────────────────────────────────────
+function esc(s){ if(!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function parseNumSmart(s){
+  if(!s) return null;
+  s = String(s).trim();
+  // Skip TBD / narrative / already-delta strings
+  if(/\[TBD\]|TBD|N\/A|not\s|uplift|pp\s|×|x\s*growth|coverage|parity|baseline established/i.test(s)) return null;
+  const neg = s.indexOf('-')===0 || s.indexOf('$-')===0 || s.indexOf('-$')===0;
+  s = s.replace(/^-?\$?-?/,'').replace(/[$,\s]/g,'');
+  const m = s.match(/^([0-9]+\.?[0-9]*)\s*([MKmk])?/);
+  if(!m) return null;
+  let n = parseFloat(m[1]);
+  if(isNaN(n)) return null;
+  const sfx = (m[2]||'').toUpperCase();
+  if(sfx==='M') n*=1e6;
+  else if(sfx==='K') n*=1e3;
+  return neg ? -n : n;
+}
+
+function calcYoY(targetStr, baselineStr){
+  if(!targetStr||!baselineStr) return null;
+  const t = parseNumSmart(String(targetStr));
+  const b = parseNumSmart(String(baselineStr).replace(/\s*baseline\s*/i,''));
+  if(t===null||b===null||b===0) return null;
+  return { pct:(t-b)/Math.abs(b), t, b };
+}
+
+function yoyHTML(yoy){
+  if(!yoy) return '';
+  const pct    = yoy.pct;
+  const pctStr = (pct>=0?'+':'') + (pct*100).toFixed(1)+'%';
+  // Green if t > b (value increased / churn improved toward 0)
+  const cls = yoy.t >= yoy.b ? 'yoy-up' : 'yoy-down';
+  const arrow = pct>=0 ? '↑' : '↓';
+  return `<span class="yoy ${cls}">${arrow}&nbsp;${pctStr}</span>`;
+}
+
+function badgeHTML(tag){
+  if(!tag) return '';
+  const t = tag.toLowerCase().trim();
+  if(t==='must win')    return '<span class="badge badge-must-win">Must Win</span>';
+  if(t==='bau')         return '<span class="badge badge-bau">BAU</span>';
+  if(t==='experiment')  return '<span class="badge badge-experiment">Experiment</span>';
+  if(t==='high impact') return '<span class="badge badge-high-impact">High Impact</span>';
+  if(t==='strategic bet') return '<span class="badge badge-strategic">Strategic Bet</span>';
+  return `<span class="badge" style="background:#F5F5F5;color:#666;border:1px solid #DDD">${esc(tag)}</span>`;
+}
+
+// ──────────────────────────────────────────────
+// Render Dashboard
+// ──────────────────────────────────────────────
+function renderDashboard(objectives, appendixRows){
+  uploadScr.style.display='none';
+  dashboard.style.display='block';
+
+  const container = document.getElementById('objectives-container');
+  container.innerHTML='';
+
+  objectives.forEach((obj, oIdx)=>{
+    const card = document.createElement('div');
+    card.className='obj-card';
+
+    // ── Build table body HTML ──
+    let tHTML='';
+    let krCounter=0;
+    let currentKRId=null;
+    let subBuffer='';
+
+    function flushSub(){
+      if(currentKRId && subBuffer){
+        tHTML += `<tbody class="kr-sub-group" data-parent="${currentKRId}">${subBuffer}</tbody>`;
+      }
+      subBuffer=''; currentKRId=null;
+    }
+
+    obj.rows.forEach(r=>{
+      if(r.type==='callout'){
+        flushSub();
+        tHTML+=`<tbody class="kr-obj-level"><tr><td colspan="8"><div class="callout callout-${r.icon==='pin'?'pin':'warn'}">${esc(r.text)}</div></td></tr></tbody>`;
+        return;
+      }
+      if(r.type==='divider'){
+        flushSub();
+        tHTML+=`<tbody class="kr-obj-level"><tr><td colspan="8"><div class="section-divider">${esc(r.text)}</div></td></tr></tbody>`;
+        return;
+      }
+
+      const c   = r.cells;
+      const tag = r.portfolioTag||'';
+      const yoy = calcYoY(c[5], c[6]);
+
+      if(r.isKR){
+        flushSub();
+        krCounter++;
+        currentKRId=`o${oIdx}_kr${krCounter}`;
+        const subCount = (() => {
+          // peek ahead to count sub-rows for this KR
+          const nextKRIdx = obj.rows.indexOf(r)+1;
+          let cnt=0;
+          for(let k=nextKRIdx; k<obj.rows.length; k++){
+            const nr=obj.rows[k];
+            if(nr.type!=='data') break;
+            if(nr.isKR) break;
+            if(nr.isSubKR||nr.isDeepSub) cnt++;
+          }
+          return cnt;
+        })();
+
+        tHTML+=`<tbody class="kr-header-group" data-kr-id="${currentKRId}">
+          <tr class="kr-row-header" data-kr-id="${currentKRId}" data-tag="${esc(tag.toLowerCase())}">
+            <td style="white-space:nowrap">
+              <span class="kr-chevron">▶</span>${esc(c[0])}
+              ${subCount>0?`<span style="font-size:10px;color:#aaa;font-weight:400;display:inline-block;margin-left:6px">${subCount} sub-KRs</span>`:''}
+            </td>
+            <td>${esc(c[1])}</td>
+            <td class="hide-mobile">${esc(c[2])}</td>
+            <td class="hide-mobile">${esc(c[4])}</td>
+            <td>
+              <span style="font-weight:600">${esc(c[5])}</span>
+              ${c[6]?`<br><span style="font-size:11px;color:#888">Baseline: ${esc(c[6])}</span>`:''}
+            </td>
+            <td>${yoyHTML(yoy)}</td>
+            <td>${badgeHTML(tag)}</td>
+            <td class="hide-mobile" style="font-size:11px;color:#888">${esc(c[9])}</td>
+          </tr>
+        </tbody>`;
+        return;
+      }
+
+      // Sub-KR row — goes into buffer for the current KR's sub-group
+      let rowCls='';
+      if(r.source.toLowerCase()==='product') rowCls='source-product';
+      else if(r.source.toLowerCase()==='leadership') rowCls='source-leadership';
+      const indentCls = r.isDeepSub ? 'deep-sub-indent' : 'sub-kr-indent';
+
+      subBuffer+=`<tr class="${rowCls}" data-tag="${esc(tag.toLowerCase())}">
+        <td class="${indentCls}">${esc(c[0])}</td>
+        <td>${esc(c[1])}</td>
+        <td class="hide-mobile">${esc(c[2])}</td>
+        <td class="hide-mobile">${esc(c[4])}</td>
+        <td>
+          ${esc(c[5])}
+          ${c[5]&&c[6]?`<br><span style="font-size:11px;color:#888">Baseline: ${esc(c[6])}</span>`:''}
+        </td>
+        <td>${yoyHTML(yoy)}</td>
+        <td>${badgeHTML(tag)}</td>
+        <td class="hide-mobile" style="font-size:11px;color:#888">${esc(c[9])}</td>
+      </tr>`;
+    });
+
+    flushSub();
+
+    card.innerHTML=`
+      <div class="obj-header">
+        <div class="obj-chevron">▶</div>
+        <div class="obj-title">${esc(obj.title)}</div>
+        <div class="obj-kr-count">${obj.krCount} KRs</div>
+      </div>
+      <div class="obj-body">
+        <table class="kr-table">
+          <thead><tr>
+            <th style="width:90px">Sr No</th>
+            <th>Key Result</th>
+            <th class="hide-mobile">Accountable</th>
+            <th class="hide-mobile">Metric</th>
+            <th style="min-width:120px">FY27 Target / FY26 Baseline</th>
+            <th style="width:80px">YoY Δ</th>
+            <th style="width:100px">Portfolio</th>
+            <th class="hide-mobile" style="width:70px">Source</th>
+          </tr></thead>
+          ${tHTML}
+        </table>
+      </div>`;
+
+    // ── Objective toggle ──
+    card.querySelector('.obj-header').addEventListener('click', ()=>{
+      card.classList.toggle('expanded');
+    });
+
+    // ── KR row toggle (expand/collapse sub-KRs) ──
+    card.querySelectorAll('.kr-row-header').forEach(krRow=>{
+      krRow.addEventListener('click', e=>{
+        e.stopPropagation();
+        const krId    = krRow.dataset.krId;
+        const subGrp  = card.querySelector(`.kr-sub-group[data-parent="${krId}"]`);
+        if(!subGrp) return;
+        const open = subGrp.classList.toggle('visible');
+        krRow.classList.toggle('kr-expanded', open);
+      });
+    });
+
+    container.appendChild(card);
+  });
+
+  // ── Filters ──
+  document.querySelectorAll('.filter-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      const filter = btn.dataset.filter.toLowerCase();
+
+      container.querySelectorAll('.kr-header-group').forEach(hGroup=>{
+        const krRow = hGroup.querySelector('.kr-row-header');
+        const tag   = (krRow.dataset.tag||'').toLowerCase();
+        const show  = filter==='all' || tag.includes(filter);
+        hGroup.style.display = show ? '' : 'none';
+        // Keep sub-group state consistent — hide it if KR is hidden
+        const subGrp = container.querySelector(`.kr-sub-group[data-parent="${krRow.dataset.krId}"]`);
+        if(subGrp && !show) { subGrp.classList.remove('visible'); krRow.classList.remove('kr-expanded'); }
+      });
+    });
+  });
+
+  // ── Appendix ──
+  if(appendixRows.length>0){
+    const appSec  = document.getElementById('appendix-section');
+    const appBody = document.getElementById('appendix-body');
+    appSec.style.display='block';
+    appBody.innerHTML='';
+
+    let curGroup=null, gHTML='';
+    function flushGroup(){
+      if(curGroup&&gHTML){
+        const d=document.createElement('div'); d.className='appendix-group';
+        d.innerHTML=`<div class="appendix-group-title">${esc(curGroup)}</div><table class="kr-table"><tbody>${gHTML}</tbody></table>`;
+        appBody.appendChild(d);
+      }
+    }
+
+    appendixRows.forEach(r=>{
+      if(r.type==='header'){ flushGroup(); curGroup=r.text; gHTML=''; return; }
+      const c=r.cells;
+      gHTML+=`<tr>
+        <td style="width:80px;font-weight:600;white-space:nowrap">${esc(c[0])}</td>
+        <td>${esc(c[1])}</td>
+        <td class="hide-mobile">${esc(c[2])}</td>
+        <td class="hide-mobile">${esc(c[4])}</td>
+        <td>${esc(c[5])}${c[5]&&c[6]?`<br><span style="font-size:11px;color:#888">Baseline: ${esc(c[6])}</span>`:''}</td>
+        <td>${yoyHTML(calcYoY(c[5],c[6]))}</td>
+        <td>${badgeHTML((c[7]||'').trim())}</td>
+      </tr>`;
+    });
+    flushGroup();
+
+    // Hidden non-foundation rows (product sub-KRs hidden in source sheet)
+    const hidden = appendixRows.filter(r=>r.type==='data'&&!r.isFoundation);
+    if(hidden.length){
+      let hHTML='';
+      hidden.forEach(r=>{
+        const c=r.cells;
+        hHTML+=`<tr>
+          <td style="width:80px;font-weight:600;white-space:nowrap">${esc(c[0])}</td>
+          <td>${esc(c[1])}</td>
+          <td class="hide-mobile">${esc(c[2])}</td>
+          <td class="hide-mobile">${esc(c[4])}</td>
+          <td>${esc(c[5])}</td>
+          <td>${yoyHTML(calcYoY(c[5],c[6]))}</td>
+          <td>${badgeHTML((c[7]||'').trim())}</td>
+        </tr>`;
+      });
+      const d=document.createElement('div'); d.className='appendix-group';
+      d.innerHTML=`<div class="appendix-group-title">Hidden Product Sub-KRs</div><table class="kr-table"><tbody>${hHTML}</tbody></table>`;
+      appBody.appendChild(d);
+    }
+
+    document.getElementById('appendix-toggle').addEventListener('click', ()=>{
+      appSec.classList.toggle('expanded');
+    });
+  }
+}
+
+})();
+</script>
+</body>
+</html>
